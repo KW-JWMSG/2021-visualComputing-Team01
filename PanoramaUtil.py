@@ -86,8 +86,7 @@ class Parnorama:
 
         matches_lines = cv.drawMatches(self.imageFrame,org_kp,img,img_kp,goodCorr,None,
                                         matchColor=(0,255,0),singlePointColor=None,matchesMask=None,flags=2)
-        self.matches_lines_ary.append(matches_lines)
-        self.goodCoors.append(goodCorr)
+        
 
         org_pts = np.float32([ org_kp[m.queryIdx].pt for m in goodCorr ]).reshape(-1,1,2)
         img_pts = np.float32([ img_kp[m.trainIdx].pt for m in goodCorr ]).reshape(-1,1,2)
@@ -122,6 +121,9 @@ class Parnorama:
         self.imageFrame = None
         self.imageFrame = total_rs
 
+        #클래스 내에서 전역으로 쓸 히스토리 데이터들
+        self.matches_lines_ary.append(matches_lines)
+        self.goodCoors.append(goodCorr)
         self.origin_imgs.append(org_layer)
         self.target_imgs.append(img_layer)
         self.mask_imags.append(T_Mask)
