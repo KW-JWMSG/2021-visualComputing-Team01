@@ -5,6 +5,8 @@
   ```
   python .\run.py <이미지재조정X>:<이미지재조정Y> <거리보정수치> <이미지1번path> <이미지2번 path> .... <이미지N번 path>
   ```
+  
+  ```
   (예시1)
   python .\run.py 500:500 0.7 .\imgSets\1.jpeg .\imgSets\2.jpeg .\imgSets\3.jpeg .\imgSets\4.jpeg .\imgSets\5.jpeg
   ```
