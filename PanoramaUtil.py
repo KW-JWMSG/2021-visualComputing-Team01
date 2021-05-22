@@ -107,7 +107,6 @@ class Parnorama:
         
         T_Mask= cv.cvtColor(T_Mask,cv.COLOR_GRAY2BGR)
         T_Mask_INV = cv.bitwise_not(T_Mask)
-        # T_Mask_INV = cv.cvtColor(T_Mask_INV,cv.COLOR_GRAY2BGR)
 
         # 마스크로 겹치는 부분 겹쳐 뽑기
         mask_layer = cv.bitwise_and( T_Mask, (img_rs*0.5 + org_rs*0.5).astype(np.uint8) )
@@ -127,15 +126,10 @@ class Parnorama:
         self.target_imgs.append(img_layer)
         self.mask_imags.append(T_Mask)
 
-
-
     def getImg(self):
         if(self.currentIdx < 1):
             raise "There are no imgs"
         return self.imageFrame
-
-
-        
 
     def showMatchLines(self):
         fv = FigViewer()
