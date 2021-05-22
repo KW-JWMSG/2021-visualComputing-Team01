@@ -18,8 +18,8 @@ class ImageIO:
         for i in self.imgPathAry:
             self.loadedImgs.append(cv.imread(i))
     def resize(self,xy):
-        for img in self.loadedImgs:
-            img = cv.resize(img, xy)
+        for i in range(0,len(self.loadedImgs)):
+            self.loadedImgs[i] = cv.resize(self.loadedImgs[i], xy)
     def get(self,i):
         if(i>len(self.loadedImgs)-1):
             return None
@@ -43,114 +43,90 @@ class FigViewer:
         plt.show()
 
 class Parnorama:
-    def __init__(self, imgLeft, imgRight = None):
-        self.imgLeft = imgLeft
-        self.imgRight = imgRight
-        self.resultIMG = imgLeft
-        self.ready = True
-        self.good_correspondences = []
+    def __init__(self):
+        self.currentIdx = 0
+        self.imageFrame = None
+        self.matches_lines_ary = []
+        self.goodCoors = []
 
+    def addNewImg(self, img):
+        if(self.currentIdx == 0):
+            self.imageFrame = np.zeros((img.shape[0]*3,img.shape[1],3),np.uint8)
+            self.imageFrame[img.shape[0]:img.shape[0]*2:,:] = img
+        else:
+            self.stitch(img)
+        self.currentIdx += 1
 
-    def drawCoreespondencesLines(self):
-        img_matches = cv.drawMatches(
-                                    self.imgLeft,self.left_kp,
-                                    self.imgRight,self.right_kp,
-                                    self.good_correspondences,None,
-                                    matchColor=(0,255,0),singlePointColor=None,
-                                    matchesMask=None,flags=2)
-        img_matches = cv.cvtColor(img_matches, cv.COLOR_BGR2RGB)
-        return img_matches
+    def stitch(self,img):
+        #최종 이미지의 가로세로 정의
+        total_row = self.imageFrame.shape[0]
+        total_col = self.imageFrame.shape[1] + img.shape[1]
 
-    def _genGray(self):
-        #사진 흑백화
-        self.imgLeft_g = cv.cvtColor(self.imgLeft, cv.COLOR_BGR2GRAY)
-        self.imgRight_g = cv.cvtColor(self.imgRight, cv.COLOR_BGR2GRAY)
-    
-    def _calcSIFT(self):
-        #SIFT 알고리즘으로 특징점 검출 및 계산
+        #SIFT + FLANN  써서 
         sift = cv.SIFT_create()
-        self.left_kp, self.left_des = sift.detectAndCompute(self.imgLeft, None)
-        self.right_kp, self.right_des = sift.detectAndCompute(self.imgRight, None)
-
-    def _drawKFP(self):
-        #특징점 찍기
-        self.imgLeft_g_kfp = cv.drawKeypoints(self.imgLeft_g, self.left_kp, 
-                                      None, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-        self.imgRight_g_kfp = cv.drawKeypoints(self.imgRight_g, self.right_kp, 
-                                        None, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    
-    def _flannMatch(self):
-        #flann 알고리즘으로 KNN매칭
         flann = cv.FlannBasedMatcher({"algorithm":1, "trees":5}, {"checks":50})
-        self.matches = flann.knnMatch(self.left_des, self.right_des, k=2)
-    
-    def _calc_good_correpondences(self,ratio_dist):
-        self.good_correspondences.clear()
-        for m,n in self.matches:
-            if m.distance/n.distance < ratio_dist:
-                self.good_correspondences.append(m)
-    
-    def _calc_H_Value(self):
-        self.left_pts = np.float32([ self.left_kp[m.queryIdx].pt for m in self.good_correspondences ]).reshape(-1,1,2)
-        self.right_pts = np.float32([ self.right_kp[m.trainIdx].pt for m in self.good_correspondences ]).reshape(-1,1,2)
-        self.H, self.mask = cv.findHomography(self.right_pts, self.left_pts, cv.RANSAC, 5.0)
-        
-    def _calc_threshold(self,leftImg,rightImg):
-        #왼쪽 오른쪽 마스크 뽑기
-        and_img = cv.bitwise_and(leftImg, rightImg)
+
+        org_kp, org_des = sift.detectAndCompute(self.imageFrame, None)
+        img_kp, img_des = sift.detectAndCompute(img, None)
+        matches = flann.knnMatch(org_des, img_des, k=2)
+
+        goodCorr = []
+        goodCorr.clear()
+        for m,n in matches:
+            if m.distance/n.distance < 0.8: # Coreespondences 수치 및 적용
+                goodCorr.append(m)
+
+        matches_lines = cv.drawMatches(self.imageFrame,org_kp,img,img_kp,goodCorr,None,
+                                        matchColor=(0,255,0),singlePointColor=None,matchesMask=None,flags=2)
+        self.matches_lines_ary.append(matches_lines)
+        self.goodCoors.append(goodCorr)
+
+        org_pts = np.float32([ org_kp[m.queryIdx].pt for m in goodCorr ]).reshape(-1,1,2)
+        img_pts = np.float32([ img_kp[m.trainIdx].pt for m in goodCorr ]).reshape(-1,1,2)
+        Homography, H_Mask = cv.findHomography(img_pts, org_pts, cv.RANSAC, 5.0)
+
+        img_rs = cv.warpPerspective(img, Homography, (total_col, total_row),
+                                 flags=cv.INTER_LINEAR, borderMode=cv.BORDER_TRANSPARENT)
+
+        org_rs = np.zeros((total_row, total_col, 3), np.uint8)
+        org_rs[0:self.imageFrame.shape[0], 0:self.imageFrame.shape[1]] = self.imageFrame
+
+        # result1, result2와 서로 겹치는 마스크 도출
+        and_img = cv.bitwise_and(img_rs, org_rs)
         and_img_gray = cv.cvtColor(and_img, cv.COLOR_BGR2GRAY)
-        th, mask = cv.threshold(and_img_gray, 1, 255, cv.THRESH_BINARY)
-        return th, mask
+        # 마스크와 역 마스크 생성
+        Threshold, T_Mask = cv.threshold(and_img_gray, 1, 255, cv.THRESH_BINARY)
+        T_Mask= cv.cvtColor(T_Mask,cv.COLOR_GRAY2BGR)
+        T_Mask_INV = cv.bitwise_not(T_Mask)
+        # T_Mask_INV = cv.cvtColor(T_Mask_INV,cv.COLOR_GRAY2BGR)
 
-    def _stitch_imges(self,rows,cols,leftImg_Rs,rightImg_Rs,mask):
-        total_Rs = np.zeros((rows, cols,3), np.uint8)
-        #일단 오른쪽 그냥 붙여넣고, 왼쪽부분만 덮어씌운뒤 마스크부분을 덮어씌우는게 속도상 제일 빠름.
-        total_Rs[0:self.imgLeft.shape[0], 0:self.imgLeft.shape[1]] = leftImg_Rs[0:self.imgLeft.shape[0], 0:self.imgLeft.shape[1]]
-        total_Rs += rightImg_Rs
-        for y in range(rows):
-            for x in range(cols):
-                mask_v = mask[y, x]
-                if(mask_v > 0):
-                    total_Rs[y, x] = np.uint8(rightImg_Rs[y,x] * 0.5 + leftImg_Rs[y,x] * 0.5)
-                elif(self.imgLeft.shape[1] < x):
-                    break
-               
-        return total_Rs
-
-    def _do_stitching(self):
-        #화면이어붙이기
-        total_stitched_rows = self.imgRight.shape[0]#세로길이 정의
-        total_stitched_cols = self.imgLeft.shape[1] + self.imgRight.shape[1] #가로길이 정의
-
-        #오른쪽 이미지 변형
-        imgRight_Result = cv.warpPerspective(
-                                    self.imgRight, self.H, (total_stitched_cols, total_stitched_rows),
-                                    flags=cv.INTER_LINEAR, borderMode=cv.BORDER_TRANSPARENT)
-                                    
-        #왼쪽이미지 기준점잡기
-        imgLeft_Result = np.zeros((total_stitched_rows, total_stitched_cols, 3), np.uint8)
-        imgLeft_Result[0:self.imgLeft.shape[0], 0:self.imgLeft.shape[1]] = self.imgLeft
-        th, calc_mask = self._calc_threshold(imgLeft_Result,imgRight_Result)
-        return self._stitch_imges(total_stitched_rows,total_stitched_cols,imgLeft_Result,imgRight_Result,calc_mask)
-
-    def _preCalc(self):
-        self._genGray()
-        self._calcSIFT()
-        self._flannMatch()
-        self._calc_good_correpondences(0.7)
-        self._calc_H_Value()
- 
-    def stitch(self):
-        try:
-            if self.ready:
-                self._preCalc()
-                self.resultIMG = self._do_stitching()
-        except Exception as e:
-            pass
-        return self.resultIMG
-    
-    def getRs(self):
-        return self.resultIMG
+        # 마스크로 겹치는 부분 겹쳐 뽑기
+        mask_layer = cv.bitwise_and( T_Mask, (img_rs*0.5 + org_rs*0.5).astype(np.uint8) )
         
-    
+        # 역마스크로 겹치지 않는 부분 각각 뽑기
+        print(org_rs.shape,T_Mask_INV.shape)
+        org_layer = cv.bitwise_and(T_Mask_INV,org_rs)
+        img_layer = cv.bitwise_and(T_Mask_INV,img_rs)
+
+        total_rs = np.zeros((total_row, total_col, 3), np.uint8)
+        total_rs = org_layer.astype(np.uint8) + mask_layer.astype(np.uint8) +img_layer.astype(np.uint8)
+
+        self.imageFrame = None
+        self.imageFrame = total_rs
+
+
+    def getImg(self):
+        if(self.currentIdx < 1):
+            raise "There are no imgs"
+        return self.imageFrame
+
+
+        
+
+    def showMatchLines(self):
+        fv = FigViewer()
+        lines = len(self.matches_lines_ary)
+        for i in range(0,lines):
+            fv.plot_img(1,lines,i+1,self.matches_lines_ary[i],'STEP(%s)'%str(i+1))
+        fv.show()
     

@@ -22,27 +22,19 @@ def main():
     rsizeY = int(sys.argv[1].split(":")[1])
     imges.resize((rsizeX,rsizeY))
 
-    pms = [pu.Parnorama(imges.get(i),imges.get(i+1)) for i in range(0, len(imges),2)]
-
-    while len(pms) > 1:
-        n_pms = []
-        print("loop",len(pms),len(n_pms))
-        for i in range(0,len(pms),2):
-            if(i+1 < len(pms)):
-                runQ(pms[i],pms[i+1])
-                n_pms.append(pu.Parnorama(pms[i].getRs(),pms[i+1].getRs()))
-            else:
-                pms[i].stitch()
-                n_pms.append(pms[i])
-        print("loop",len(pms),len(n_pms))
-        pms = n_pms
-    if( len(pms) == 1):
-        pms[0].stitch()
+    pm = pu.Parnorama()
+    pm.addNewImg(imges.get(0))
+    pm.addNewImg(imges.get(1))
+    pm.addNewImg(imges.get(2))
+    pm.addNewImg(imges.get(3))
+    pm.addNewImg(imges.get(4))
+    
+    pm.showMatchLines()
 
     fv = pu.FigViewer()
-    for i in range(0,len(pms)):
-        fv.plot_img(len(pms),1,i+1,pms[i].getRs(),str("RS"+str(i)))
+    fv.plot_img(1,1,1,pm.getImg(),"IMG")
     fv.show()
+
 
 if __name__ == "__main__":
     main()
