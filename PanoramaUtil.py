@@ -115,9 +115,11 @@ class Parnorama:
         org_layer = cv.bitwise_and(T_Mask_INV,org_rs)
         img_layer = cv.bitwise_and(T_Mask_INV,img_rs)
 
+        # 각 영역들 그냥 한번에 합치기
         total_rs = np.zeros((total_row, total_col, 3), np.uint8)
         total_rs = org_layer.astype(np.uint8) + mask_layer.astype(np.uint8) +img_layer.astype(np.uint8)
 
+        # 변수 한번 초기화 해주고, 기존 변수 항목 업데이트
         self.imageFrame = None
         self.imageFrame = total_rs
 
