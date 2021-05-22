@@ -60,8 +60,6 @@ class Parnorama:
             self.imageFrame[img.shape[0]:img.shape[0]*2:,:] = img
             
         else:
-            self.origin_imgs.append(self.imageFrame)
-            self.target_imgs.append(img)
             self.stitch(img)
         self.currentIdx += 1
 
@@ -105,7 +103,7 @@ class Parnorama:
         and_img_gray = cv.cvtColor(and_img, cv.COLOR_BGR2GRAY)
         # 마스크와 역 마스크 생성
         Threshold, T_Mask = cv.threshold(and_img_gray, 1, 255, cv.THRESH_BINARY)
-        self.mask_imags.append(T_Mask)
+        
         T_Mask= cv.cvtColor(T_Mask,cv.COLOR_GRAY2BGR)
         T_Mask_INV = cv.bitwise_not(T_Mask)
         # T_Mask_INV = cv.cvtColor(T_Mask_INV,cv.COLOR_GRAY2BGR)
@@ -123,6 +121,11 @@ class Parnorama:
 
         self.imageFrame = None
         self.imageFrame = total_rs
+
+        self.origin_imgs.append(org_layer)
+        self.target_imgs.append(img_layer)
+        self.mask_imags.append(T_Mask)
+
 
 
     def getImg(self):
