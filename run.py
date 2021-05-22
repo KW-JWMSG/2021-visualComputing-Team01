@@ -23,12 +23,8 @@ def main():
     imges.resize((rsizeX,rsizeY))
 
     pm = pu.Parnorama()
-    pm.addNewImg(imges.get(0))
-    pm.addNewImg(imges.get(1))
-    pm.addNewImg(imges.get(2))
-    pm.addNewImg(imges.get(3))
-    pm.addNewImg(imges.get(4))
-    
+    for i in range(0,len(imges)):
+        pm.addNewImg(imges.get(i))
     pm.showMatchLines()
 
     fv = pu.FigViewer()

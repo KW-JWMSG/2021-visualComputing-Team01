@@ -72,8 +72,9 @@ class Parnorama:
 
         goodCorr = []
         goodCorr.clear()
+        corrAry = [m.distance/n.distance for m,n in matches]
         for m,n in matches:
-            if m.distance/n.distance < 0.8: # Coreespondences 수치 및 적용
+            if m.distance/n.distance < 0.7: # Coreespondences 수치 및 적용
                 goodCorr.append(m)
 
         matches_lines = cv.drawMatches(self.imageFrame,org_kp,img,img_kp,goodCorr,None,
