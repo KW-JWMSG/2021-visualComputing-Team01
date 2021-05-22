@@ -45,7 +45,7 @@ class FigViewer:
         return self.fig
 
 class Parnorama:
-    def __init__(self):
+    def __init__(self,distanceRatio):
         self.currentIdx = 0
         self.imageFrame = None
         self.origin_imgs = []
@@ -53,6 +53,7 @@ class Parnorama:
         self.mask_imags = []
         self.matches_lines_ary = []
         self.goodCoors = []
+        self.distanceRatio = distanceRatio
 
     def addNewImg(self, img):
         if(self.currentIdx == 0):
@@ -80,7 +81,7 @@ class Parnorama:
         goodCorr.clear()
         corrAry = [m.distance/n.distance for m,n in matches]
         for m,n in matches:
-            if m.distance/n.distance < 0.7: # Coreespondences 수치 및 적용
+            if m.distance/n.distance < self.distanceRatio: # Coreespondences 수치 및 적용
                 goodCorr.append(m)
 
         matches_lines = cv.drawMatches(self.imageFrame,org_kp,img,img_kp,goodCorr,None,
