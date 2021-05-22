@@ -15,11 +15,10 @@ def main():
     pm = pu.Parnorama()
     for i in range(0,len(imges)):
         pm.addNewImg(imges.get(i))
+    
     pm.showMatchLines()
 
-    fv = pu.FigViewer()
-    fv.plot_img(1,1,1,pm.getImg(),"IMG")
-    fv.show()
+    
 
 
 if __name__ == "__main__":

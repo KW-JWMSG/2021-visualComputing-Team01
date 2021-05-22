@@ -41,11 +41,16 @@ class FigViewer:
     def show(self):
         plt.figure(self.fig)
         plt.show()
+    def getFig(self):
+        return self.fig
 
 class Parnorama:
     def __init__(self):
         self.currentIdx = 0
         self.imageFrame = None
+        self.origin_imgs = []
+        self.target_imgs = []
+        self.mask_imags = []
         self.matches_lines_ary = []
         self.goodCoors = []
 
@@ -53,7 +58,10 @@ class Parnorama:
         if(self.currentIdx == 0):
             self.imageFrame = np.zeros((img.shape[0]*3,img.shape[1],3),np.uint8)
             self.imageFrame[img.shape[0]:img.shape[0]*2:,:] = img
+            
         else:
+            self.origin_imgs.append(self.imageFrame)
+            self.target_imgs.append(img)
             self.stitch(img)
         self.currentIdx += 1
 
@@ -97,6 +105,7 @@ class Parnorama:
         and_img_gray = cv.cvtColor(and_img, cv.COLOR_BGR2GRAY)
         # 마스크와 역 마스크 생성
         Threshold, T_Mask = cv.threshold(and_img_gray, 1, 255, cv.THRESH_BINARY)
+        self.mask_imags.append(T_Mask)
         T_Mask= cv.cvtColor(T_Mask,cv.COLOR_GRAY2BGR)
         T_Mask_INV = cv.bitwise_not(T_Mask)
         # T_Mask_INV = cv.cvtColor(T_Mask_INV,cv.COLOR_GRAY2BGR)
@@ -126,8 +135,29 @@ class Parnorama:
 
     def showMatchLines(self):
         fv = FigViewer()
+        fv.getFig().canvas.mpl_connect('close_event', lambda e : plt.close('all'))
         lines = len(self.matches_lines_ary)
         for i in range(0,lines):
-            fv.plot_img(1,lines,i+1,self.matches_lines_ary[i],'STEP(%s)'%str(i+1))
+            ax_img, ax = fv.plot_img(1,lines,i+1,self.matches_lines_ary[i],'STEP(%s)'%str(i+1))
+            tx = ax.text(0.05, 0.95, "# good correspondences: " +
+                 str(len(self.goodCoors[i])), transform=ax.transAxes, fontsize=7,
+            verticalalignment='top', bbox={'boxstyle':'round', 'facecolor':'wheat', 'alpha':0.5})
+            tx.set_text("good correspondences "+str(i+1)+': ' + str(len(self.goodCoors[i])))
+        button_ax = plt.axes([0.8, 0.025, 0.1, 0.04])
+        button = Button(button_ax, 'Stitch', color='lightgoldenrodyellow', hovercolor='0.975')
+        button.on_clicked(self.showResultImage)
         fv.show()
+
+    def showResultImage(self,_):
+        fv1 = FigViewer()
+        for i in range(0, len(self.origin_imgs)):   
+            fv1.plot_img(4,3,i*3 + 1,self.origin_imgs[i],None)
+            fv1.plot_img(4,3,i*3 + 2,self.target_imgs[i],None)
+            fv1.plot_img(4,3,i*3 + 3,self.mask_imags[i],None)
+        fv1.show()
+
+        fv2 = FigViewer()
+        fv2.plot_img(1,1,1,self.getImg(),None)
+        fv2.show()
+
     
