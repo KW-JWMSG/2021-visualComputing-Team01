@@ -2,16 +2,6 @@ import PanoramaUtil as pu
 import cv2 as cv
 import sys
 
-from threading import Thread
-
-def runQ(pm1, pm2):
-    p1 = Thread(target=pm1.stitch, args=())
-    p2 = Thread(target=pm2.stitch, args=())
-    p1.start()
-    p2.start()
-    p1.join()
-    p2.join()
-
 def main():
     print(sys.argv[0])
     if(len(sys.argv)<3):
