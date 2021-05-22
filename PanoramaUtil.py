@@ -155,9 +155,9 @@ class Parnorama:
     def showResultImage(self,_):
         fv1 = FigViewer()
         for i in range(0, len(self.origin_imgs)):   
-            fv1.plot_img(4,3,i*3 + 1,self.origin_imgs[i],None)
-            fv1.plot_img(4,3,i*3 + 2,self.target_imgs[i],None)
-            fv1.plot_img(4,3,i*3 + 3,self.mask_imags[i],None)
+            fv1.plot_img(len(self.origin_imgs),3,i*3 + 1,self.origin_imgs[i],None)
+            fv1.plot_img(len(self.origin_imgs),3,i*3 + 2,self.target_imgs[i],None)
+            fv1.plot_img(len(self.origin_imgs),3,i*3 + 3,self.mask_imags[i],None)
         fv1.show()
 
         fv2 = FigViewer()

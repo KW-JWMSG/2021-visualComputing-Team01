@@ -1,5 +1,4 @@
 #TEST SET 1
-python .\run.py 500:500 .\imgSets\1.jpeg .\imgSets\2.jpeg .\imgSets\3.jpeg .\imgSets\4.jpeg .\imgSets\5.jpeg
-
+python .\run.py 500:500 0.7 .\imgSets\1.jpeg .\imgSets\2.jpeg .\imgSets\3.jpeg .\imgSets\4.jpeg .\imgSets\5.jpeg
 #TEST SET 2
-python .\run.py 800:800 .\imgTest\1.jpg .\imgTest\2.jpg .\imgTest\3.jpg .\imgTest\4.jpg .\imgTest\5.jpg .\imgTest\6.jpg .\imgTest\7.jpg .\imgTest\8.jpg .\imgTest\9.jpg
+python .\run.py 800:800 0.7 .\imgTest\1.jpg .\imgTest\2.jpg .\imgTest\3.jpg .\imgTest\4.jpg .\imgTest\5.jpg .\imgTest\6.jpg .\imgTest\7.jpg .\imgTest\8.jpg .\imgTest\9.jpg
